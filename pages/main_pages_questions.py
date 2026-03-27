@@ -1,69 +1,42 @@
-from selenium.webdriver.support import expected_conditions
-from selenium.webdriver.support.wait import WebDriverWait
-from locators.main_page_locators import (
-    question_button,
-    answer_text,
-    cookie_button,
-    order_button,
-)
+import allure
+from pages.base_page import BasePage
+from locators.main_page_locators import MainPageLocators
 
 
-class MainHomePage:
+class MainHomePage(BasePage):
     def __init__(self, driver):
-        self.driver = driver
-        self.wait = WebDriverWait(driver, 3)
-        self.question_button_template = question_button
-        self.answer_text_template = answer_text
-        self.cookie_button = cookie_button
-        self.order_button = order_button
+        super().__init__(driver)
+        self.locators = MainPageLocators()
 
+    @allure.step("Принять куки")
     def accept_cookies(self):
         try:
-            cookie = self.wait.until(
-                expected_conditions.element_to_be_clickable(self.cookie_button)
-            )
-            cookie.click()
+            self.click(self.locators.cookie_button)
         except Exception:
             pass
 
-    def get_question_element(self, index):
-        by_question, value_question = self.question_button_template
-        return self.driver.find_element(by_question, value_question.format(index))
-
-    def scroll_to_element(self, element):
-        self.driver.execute_script("arguments[0].scrollIntoView();", element)
-
+    @allure.step("Кликнуть на вопрос с индексом")
     def click_question(self, index):
-        self.accept_cookies()
-        question = self.get_question_element(index)
-        self.scroll_to_element(question)
-        by_question, value_question = self.question_button_template
-        self.wait.until(
-            expected_conditions.element_to_be_clickable(
-                (by_question, value_question.format(index))
-            )
+        question_locator = (
+            self.locators.question_button[0],
+            self.locators.question_button[1].format(index),
         )
-        self.driver.execute_script("arguments[0].click();", question)
+        self.scroll_to_element(question_locator)
+        self.click_js(question_locator)
 
+    @allure.step("Получить текст ответа на вопрос с индексом")
     def get_answer_element(self, index):
-        by_answer, value_answer = self.answer_text_template
-        return self.driver.find_element(by_answer, value_answer.format(index))
-
-    def wait_answer_text(self, index):
-        by_answer, value_answer = self.answer_text_template
-        self.wait.until(
-            expected_conditions.visibility_of_element_located(
-                (by_answer, value_answer.format(index))
-            )
+        answer_locator = (
+            self.locators.answer_text[0],
+            self.locators.answer_text[1].format(index),
         )
+        self.wait_visible(answer_locator)
+        return self.get_text(answer_locator)
 
-    def get_answer_text(self, index):
-        self.wait_answer_text(index)
-        answer = self.get_answer_element(index)
-        return answer.text
-
+    @allure.step("Кликнуть на верхнюю кнопку 'Заказать'")
     def click_to_order_button(self):
-        self.driver.find_element(*self.order_button).click()
+        self.click(self.locators.order_button)
 
+    @allure.step("Кликнуть на нижнюю кнопку 'Заказать'")
     def click_to_order_button_2(self):
-        self.driver.find_element(*self.order_button_2).click()
+        self.click(self.locators.order_button_2)
